@@ -3,31 +3,20 @@ import {
   Card,
   Upload,
   Button,
-  Input,
-  Select,
   Progress,
   message,
-  Steps,
   Space,
 } from 'antd';
-import { UploadOutlined, AudioOutlined } from '@ant-design/icons';
-import type { UploadFile } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { uploadFile } from '../api/files';
 import { createVoice } from '../api/voices';
 import AudioRecorder from '../components/AudioRecorder';
 import AudioWaveform from '../components/AudioWaveform';
 
-const { TextArea } = Input;
-const { Option } = Select;
-
-type ProcessingStep = 'upload' | 'embedding' | 'cloning' | 'complete';
+type ProcessingStep = 'upload' | 'processing' | 'complete';
 
 const CreateVoice = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [fileId, setFileId] = useState<string | null>(null);
-  const [text, setText] = useState('');
-  const [sampleText, setSampleText] = useState('');
-  const [model, setModel] = useState('step-tts-mini');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<ProcessingStep>('upload');
@@ -35,9 +24,9 @@ const CreateVoice = () => {
 
   const handleFileSelect = (file: File) => {
     // 格式校验
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3'];
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/webm'];
     if (!validTypes.includes(file.type)) {
-      message.error('只支持 MP3 或 WAV 格式');
+      message.error('只支持 MP3、WAV 或 WebM 格式');
       return false;
     }
 
@@ -48,12 +37,13 @@ const CreateVoice = () => {
     }
 
     setFile(file);
+    setVoiceResult(null); // 清除之前的结果
     return false; // 阻止自动上传
   };
 
-  const handleUpload = async () => {
+  const handleCreateVoice = async () => {
     if (!file) {
-      message.error('请先选择音频文件');
+      message.error('请先选择或录制音频文件');
       return;
     }
 
@@ -61,131 +51,169 @@ const CreateVoice = () => {
     setCurrentStep('upload');
 
     try {
-      // 上传文件
-      const response = await uploadFile(file, (progressEvent) => {
+      // 1. 上传文件
+      const uploadResponse = await uploadFile(file, (progressEvent) => {
         const percent = progressEvent.total
           ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
           : 0;
         setUploadProgress(percent);
       });
 
-      if (response.success) {
-        setFileId(response.data.fileId);
-        setCurrentStep('embedding');
+      if (!uploadResponse.success) {
+        throw new Error('文件上传失败');
+      }
 
-        // 创建音色
-        const voiceResponse = await createVoice({
-          fileId: response.data.fileId,
-          text: text || undefined,
-          sampleText: sampleText || undefined,
-          model,
-        });
+      setCurrentStep('processing');
 
-        if (voiceResponse.success) {
-          setCurrentStep('complete');
-          setVoiceResult(voiceResponse.data);
-          message.success('音色创建成功！');
-        }
+      // 2. 创建语音角色（自动生成 embedding）
+      const voiceResponse = await createVoice({
+        fileId: uploadResponse.data.fileId,
+        model: 'codec', // 使用 Codec 模型
+      });
+
+      if (voiceResponse.success) {
+        setCurrentStep('complete');
+        setVoiceResult(voiceResponse.data);
+        message.success('语音角色创建成功！');
       }
     } catch (error: any) {
       message.error(error.message || '创建失败');
+      setCurrentStep('upload');
     } finally {
       setProcessing(false);
     }
   };
 
-  const steps = [
-    { title: '上传音频', status: currentStep === 'upload' ? 'process' : 'finish' },
-    { title: '生成Embedding', status: currentStep === 'embedding' ? 'process' : 'wait' },
-    { title: '复刻音色', status: currentStep === 'cloning' ? 'process' : 'wait' },
-    { title: '完成', status: currentStep === 'complete' ? 'finish' : 'wait' },
-  ];
+  const handleReset = () => {
+    setFile(null);
+    setVoiceResult(null);
+    setCurrentStep('upload');
+    setUploadProgress(0);
+  };
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <Card title="创建语音角色">
-        <Steps current={steps.findIndex((s) => s.status === 'process')} items={steps} style={{ marginBottom: '32px' }} />
-
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 音频上传/录音区域 */}
           <div>
-            <div style={{ marginBottom: '8px' }}>音频文件（5-10秒，MP3/WAV）</div>
-            <Upload
-              beforeUpload={handleFileSelect}
-              accept="audio/mpeg,audio/wav,audio/mp3"
-              showUploadList={false}
-            >
-              <Button icon={<UploadOutlined />}>选择文件</Button>
-            </Upload>
-            <AudioRecorder onRecordComplete={(file) => setFile(file)} />
+            <div style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 500 }}>
+              上传或录制音频（1-10秒）
+            </div>
+            
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <Upload
+                beforeUpload={handleFileSelect}
+                accept="audio/mpeg,audio/wav,audio/mp3,audio/webm"
+                showUploadList={false}
+                disabled={processing}
+              >
+                <Button icon={<UploadOutlined />} disabled={processing}>
+                  选择音频文件
+                </Button>
+              </Upload>
+
+              <AudioRecorder 
+                onRecordComplete={(recordedFile) => {
+                  setFile(recordedFile);
+                  setVoiceResult(null);
+                }} 
+              />
+            </Space>
+
             {file && (
-              <div style={{ marginTop: '16px' }}>
-                <div>文件名: {file.name}</div>
-                <div>大小: {(file.size / 1024).toFixed(2)} KB</div>
+              <div style={{ marginTop: '16px', padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>文件名:</strong> {file.name}
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>大小:</strong> {(file.size / 1024).toFixed(2)} KB
+                </div>
                 <AudioWaveform file={file} />
               </div>
             )}
+
             {processing && currentStep === 'upload' && (
-              <Progress percent={uploadProgress} style={{ marginTop: '16px' }} />
+              <div style={{ marginTop: '16px' }}>
+                <div style={{ marginBottom: '8px' }}>上传中...</div>
+                <Progress percent={uploadProgress} />
+              </div>
+            )}
+
+            {processing && currentStep === 'processing' && (
+              <div style={{ marginTop: '16px' }}>
+                <Progress percent={100} status="active" />
+                <div style={{ marginTop: '8px', textAlign: 'center', color: '#1890ff' }}>
+                  正在生成语音角色...
+                </div>
+              </div>
             )}
           </div>
 
-          <div>
-            <div style={{ marginBottom: '8px' }}>音频对应文本（可选，建议填写）</div>
-            <TextArea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="请输入音频对应的文本内容"
-              rows={3}
-            />
-          </div>
+          {/* 操作按钮 */}
+          {!voiceResult && (
+            <Button
+              type="primary"
+              size="large"
+              onClick={handleCreateVoice}
+              loading={processing}
+              disabled={!file || processing}
+              block
+            >
+              {processing ? '创建中...' : '创建语音角色'}
+            </Button>
+          )}
 
-          <div>
-            <div style={{ marginBottom: '8px' }}>试听文本（可选，最多50字）</div>
-            <TextArea
-              value={sampleText}
-              onChange={(e) => {
-                if (e.target.value.length <= 50) {
-                  setSampleText(e.target.value);
-                }
-              }}
-              placeholder="用于生成试听音频的文本"
-              rows={2}
-              maxLength={50}
-              showCount
-            />
-          </div>
-
-          <div>
-            <div style={{ marginBottom: '8px' }}>模型选择</div>
-            <Select value={model} onChange={setModel} style={{ width: '100%' }}>
-              <Option value="step-tts-2">step-tts-2</Option>
-              <Option value="step-tts-mini">step-tts-mini</Option>
-              <Option value="step-tts-vivid">step-tts-vivid</Option>
-              <Option value="step-audio-2">step-audio-2</Option>
-            </Select>
-          </div>
-
-          <Button
-            type="primary"
-            size="large"
-            onClick={handleUpload}
-            loading={processing}
-            disabled={!file}
-            block
-          >
-            创建音色
-          </Button>
-
+          {/* 创建成功结果 */}
           {voiceResult && (
-            <Card title="创建成功">
-              <div>Voice ID: {voiceResult.voiceId}</div>
-              <div>Embedding Hash: {voiceResult.embeddingHash}</div>
-              {voiceResult.sampleAudio && (
-                <div style={{ marginTop: '16px' }}>
-                  <div>试听音频:</div>
-                  <audio controls src={`data:audio/wav;base64,${voiceResult.sampleAudio}`} />
+            <Card 
+              title="✓ 创建成功" 
+              style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}
+            >
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <div>
+                  <strong>Voice ID:</strong> 
+                  <div style={{ 
+                    marginTop: '4px', 
+                    padding: '8px', 
+                    background: '#fff', 
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all'
+                  }}>
+                    {voiceResult.voiceId}
+                  </div>
                 </div>
-              )}
+
+                <div>
+                  <strong>Embedding Hash:</strong>
+                  <div style={{ 
+                    marginTop: '4px', 
+                    padding: '8px', 
+                    background: '#fff', 
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all'
+                  }}>
+                    {voiceResult.embeddingHash}
+                  </div>
+                </div>
+
+                {voiceResult.sampleAudio && (
+                  <div>
+                    <strong>试听音频:</strong>
+                    <audio 
+                      controls 
+                      src={`data:audio/wav;base64,${voiceResult.sampleAudio}`}
+                      style={{ width: '100%', marginTop: '8px' }}
+                    />
+                  </div>
+                )}
+
+                <Button type="primary" onClick={handleReset} block>
+                  创建新角色
+                </Button>
+              </Space>
             </Card>
           )}
         </Space>

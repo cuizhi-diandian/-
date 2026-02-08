@@ -33,7 +33,7 @@ export class VoiceService {
       return existing;
     }
 
-    // 1. 生成embedding
+    // 1. 生成随机 embedding（不调用外部 API）
     const { vector, vectorHash } = await embeddingService.generateEmbedding(fileId);
     await embeddingService.saveEmbedding(fileId, vector, vectorHash);
 
@@ -43,44 +43,28 @@ export class VoiceService {
       throw new Error('文件不存在');
     }
 
-    // 3. 调用StepFun复刻音色
-    const stepFileId = file.stepFileId || fileId; // 如果没有stepFileId，使用fileId
-    const cloneRequest: CloneVoiceRequest = {
-      fileId: stepFileId,
-      model,
-      text,
-      sampleText,
-    };
-
-    const cloneResponse = await stepfunService.cloneVoice(cloneRequest);
-
-    // 4. 保存sample音频
-    let sampleAudioPath: string | undefined;
-    if (cloneResponse.sampleAudio) {
-      const voiceId = uuidv4();
-      sampleAudioPath = path.join(SAMPLES_DIR, `${voiceId}.wav`);
-      const audioBuffer = Buffer.from(cloneResponse.sampleAudio, 'base64');
-      await fs.writeFile(sampleAudioPath, audioBuffer);
-    }
-
-    // 5. 保存到内存
-    const id = uuidv4();
+    // 3. 创建语音角色（使用随机 embedding，不调用 StepFun）
+    const voiceId = uuidv4();
     const voice: Voice = {
-      id,
+      id: voiceId,
       userId,
-      stepVoiceId: cloneResponse.id,
+      stepVoiceId: `local-${voiceId}`, // 本地生成的 ID
       fileId,
-      model,
+      model: model || 'codec',
       text: text || undefined,
       sampleText: sampleText || undefined,
-      sampleAudioPath: sampleAudioPath || undefined,
+      sampleAudioPath: file.filePath, // 使用原始音频文件
       embeddingHash: vectorHash,
-      metadata: { duplicated: cloneResponse.duplicated || false },
+      metadata: { 
+        type: 'codec-model',
+        createdLocally: true 
+      },
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     memoryStorage.saveVoice(voice);
+    console.log('Voice created with random embedding:', voiceId);
     return voice;
   }
 

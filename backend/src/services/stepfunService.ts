@@ -1,11 +1,15 @@
 import axios, { AxiosError } from 'axios';
 
 const STEP_API_BASE_URL = 'https://api.stepfun.com/v1';
-const STEP_API_KEY = process.env.STEP_API_KEY;
 
-if (!STEP_API_KEY) {
-  console.warn('WARNING: STEP_API_KEY is not set in environment variables');
-}
+// 动态获取 API Key 的函数
+const getApiKey = (): string => {
+  const apiKey = process.env.STEP_API_KEY;
+  if (!apiKey) {
+    throw new Error('STEP_API_KEY is not configured');
+  }
+  return apiKey;
+};
 
 export interface CloneVoiceRequest {
   fileId: string;
@@ -28,11 +32,18 @@ export interface GenerateSpeechRequest {
   model: string;
 }
 
+export interface UploadFileResponse {
+  id: string;
+  object: string;
+  bytes: number;
+  created_at: number;
+  filename: string;
+  purpose: string;
+}
+
 export class StepFunService {
   private async makeRequest<T>(method: string, endpoint: string, data?: any): Promise<T> {
-    if (!STEP_API_KEY) {
-      throw new Error('STEP_API_KEY is not configured');
-    }
+    const STEP_API_KEY = getApiKey(); // 动态获取 API Key
 
     try {
       const response = await axios({
@@ -49,6 +60,15 @@ export class StepFunService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
+      
+      // 记录详细的错误信息
+      console.error('StepFun API Error:', {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        data: axiosError.response?.data,
+        endpoint,
+        requestData: data,
+      });
       
       if (axiosError.response?.status === 401) {
         const errorMessage = axiosError.response?.data || 'Invalid API key';
@@ -69,6 +89,42 @@ export class StepFunService {
   }
 
   /**
+   * 上传音频文件到 StepFun（用于语音克隆）
+   */
+  async uploadAudioFile(filePath: string): Promise<UploadFileResponse> {
+    const STEP_API_KEY = getApiKey();
+    const FormData = require('form-data');
+    const fs = require('fs');
+    
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(filePath));
+    formData.append('purpose', 'storage'); // 使用 storage 作为 purpose
+
+    try {
+      const response = await axios({
+        method: 'POST',
+        url: `${STEP_API_BASE_URL}/files`,
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${STEP_API_KEY}`,
+        },
+        data: formData,
+        timeout: 60000,
+      });
+
+      console.log('File uploaded to StepFun successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error('StepFun File Upload Error:', {
+        status: axiosError.response?.status,
+        data: axiosError.response?.data,
+      });
+      throw new Error(`文件上传到 StepFun 失败: ${JSON.stringify(axiosError.response?.data)}`);
+    }
+  }
+
+  /**
    * 复刻音色
    */
   async cloneVoice(request: CloneVoiceRequest): Promise<CloneVoiceResponse> {
@@ -84,6 +140,8 @@ export class StepFunService {
    * 生成TTS音频
    */
   async generateSpeech(request: GenerateSpeechRequest): Promise<Buffer> {
+    const STEP_API_KEY = getApiKey(); // 动态获取 API Key
+    
     const response = await axios({
       method: 'POST',
       url: `${STEP_API_BASE_URL}/audio/speech`,

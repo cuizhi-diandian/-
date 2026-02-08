@@ -39,7 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
     <AntLayout style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       <Header style={{ display: 'flex', alignItems: 'center', background: '#001529', height: '64px' }}>
         <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', marginRight: '40px' }}>
-          情感语音平台
+          本周之声
         </div>
         <Menu
           theme="dark"
@@ -53,7 +53,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </Content>
       <Footer style={{ textAlign: 'center', background: '#fff', padding: '16px' }}>
-        情感人格化语音平台 ©2024
+        本周之声 ©2024
       </Footer>
     </AntLayout>
   );

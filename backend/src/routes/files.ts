@@ -4,6 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import fileService from '../services/fileServiceMemory';
+import stepfunService from '../services/stepfunService';
 import { sendSuccess, sendError } from '../utils/response';
 import audioPreprocessor from '../services/audioPreprocessor';
 
@@ -51,13 +52,13 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     const duration = await audioPreprocessor.getDuration(processedFile.path);
 
     // 校验时长
-    if (duration < 5 || duration > 10) {
+    if (duration < 1 || duration > 10) {
       await fs.unlink(processedFile.path);
-      return sendError(res, '音频时长必须在5-10秒之间', 400);
+      return sendError(res, '音频时长必须在1-10秒之间', 400);
     }
 
-    // 保存文件信息到数据库
-    const userId = (req as any).userId || 'default-user'; // 实际应该从认证中间件获取
+    // 保存文件信息（不上传到 StepFun，使用本地存储）
+    const userId = (req as any).userId || 'default-user';
     const fileMetadata = await fileService.uploadFile(
       userId,
       req.file.originalname,

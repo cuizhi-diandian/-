@@ -53,8 +53,9 @@ const AudioWaveform = ({ file }: AudioWaveformProps) => {
       {duration > 0 && (
         <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
           时长: {duration.toFixed(2)}秒
-          {duration < 5 && <span style={{ color: 'orange' }}> (建议5-10秒)</span>}
-          {duration > 10 && <span style={{ color: 'red' }}> (超过10秒，将被裁剪)</span>}
+          {duration < 1 && <span style={{ color: 'red' }}> (时长过短，建议1-10秒)</span>}
+          {duration >= 1 && duration <= 10 && <span style={{ color: 'green' }}> ✓ 时长合适</span>}
+          {duration > 10 && <span style={{ color: 'orange' }}> (超过10秒，建议裁剪)</span>}
         </div>
       )}
     </div>

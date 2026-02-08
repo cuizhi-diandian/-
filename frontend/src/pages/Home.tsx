@@ -47,7 +47,7 @@ const Home = () => {
   return (
     <div style={{ padding: '20px', minHeight: '400px' }}>
       <h1 style={{ marginBottom: '24px', fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
-        语音角色平台
+        本周之声 - 语音角色平台
       </h1>
       <div style={{ marginBottom: '24px' }}>
         <Search

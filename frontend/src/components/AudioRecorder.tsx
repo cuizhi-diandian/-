@@ -49,7 +49,7 @@ const AudioRecorder = ({ onRecordComplete }: AudioRecorderProps) => {
           // 限制在10秒
           if (newDuration >= 10) {
             stopRecording();
-            message.warning('录音时长已达到10秒上限');
+            message.info('录音已达到10秒上限');
           }
           return newDuration;
         });
