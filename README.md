@@ -142,7 +142,11 @@ flowchart TB
 
 ## 五、技术要点 · Key Technical Decisions
 
-### 🧠 Embedding 设计（阶段一）
+### 🧠 录音去噪（阶段一）
+
+使用ClearerVoice最先进的预训练模型进行语音去噪
+
+### 🧠 Embedding 设计（阶段二）
 
 * 使用**CODEC**模型进行encoder编码
 
