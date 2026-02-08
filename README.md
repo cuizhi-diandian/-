@@ -59,6 +59,7 @@
 
 ---
 
+
 ## 三、产品功能一览 · What You Can Do
 
 ### 👤 对创作者
@@ -179,6 +180,18 @@ def generate_embedding(file_id: str, dimension: int = 256):
 * 允许陪伴，但不制造依赖
 
 ---
+### 🛡 0G上链
+
+**普通链的问题**
+如果你把声音人格放在普通 L1（ETH / Polygon）：
+链上只能放：
+NFT ID、ownership、少量 metadata、所有“人格成长”“被使用的过程”、使用日志、情感状态、记忆 embedding、模型版本
+👉 都只能回到中心化服务器
+
+**0G 是 AI + Data 原生链**，我们的项目使用0G上链：
+
+👉 你的「声音人格」不是一个 NFT
+👉 而是一个 链上可追溯的“情感状态体”
 
 ## 六、前端设计哲学 · Frontend Philosophy
 
