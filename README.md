@@ -224,7 +224,7 @@ EMBEDDING_DIMENSION=256
 * Discover 页内容叙事优化
 * 使用统计与创作者视图
 
-### M2 · 深度演进（规划中）
+### M2 · 深度演进（进行中）
 
 * 真实 codec / embedding 模型接入
 * 情绪识别与动态响应
