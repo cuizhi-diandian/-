@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Button, Spin, message } from 'antd';
 import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons';
 import { getVoice, type Voice } from '../api/voices';
+import VoiceNFTMint from '../components/VoiceNFTMint';
 
 const VoiceDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,6 +92,8 @@ const VoiceDetail = () => {
             </Button>
           </div>
         )}
+
+        <VoiceNFTMint voiceId={voice.id} embeddingHash={voice.embeddingHash || ""} />
       </Card>
     </div>
   );
