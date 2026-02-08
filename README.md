@@ -193,6 +193,9 @@ NFT ID、ownership、少量 metadata、所有“人格成长”“被使用的�
 👉 你的「声音人格」不是一个 NFT
 👉 而是一个 链上可追溯的“情感状态体”
 
+
+---
+
 ## 六、前端设计哲学 · Frontend Philosophy
 
 * **不是工具感，而是编辑感**
