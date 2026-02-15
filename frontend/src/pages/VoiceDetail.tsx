@@ -5,6 +5,7 @@ import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons';
 import { getVoice, type Voice } from '../api/voices';
 import VoiceNFTMint from '../components/VoiceNFTMint';
 import { theme } from '../styles/theme';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const VoiceDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +34,12 @@ const VoiceDetail = () => {
   };
 
   const handleDownload = () => {
-    message.info('下载功能待实现');
+    if (!voice?.sampleAudioPath) {
+      message.error('暂无可下载音频');
+      return;
+    }
+
+    window.open(resolveMediaUrl(voice.sampleAudioPath), '_blank');
   };
 
   if (loading) {
@@ -294,7 +300,7 @@ const VoiceDetail = () => {
               marginBottom: theme.spacing.md,
               borderRadius: theme.borderRadius.small,
             }}>
-              <source src={voice.sampleAudioPath} type="audio/wav" />
+              <source src={resolveMediaUrl(voice.sampleAudioPath)} type="audio/wav" />
             </audio>
             <Button
               icon={<DownloadOutlined />}
