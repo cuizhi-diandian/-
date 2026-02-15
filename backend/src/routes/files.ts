@@ -30,10 +30,11 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const isWebm = file.mimetype.startsWith('audio/webm');
+    if (allowedTypes.includes(file.mimetype) || isWebm) {
       cb(null, true);
     } else {
-      cb(new Error('只支持 MP3 或 WAV 格式'));
+      cb(new Error('只支持 MP3、WAV 或 WebM 格式'));
     }
   },
 });

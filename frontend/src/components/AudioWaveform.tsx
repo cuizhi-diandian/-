@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 
 interface AudioWaveformProps {
   file: File;
+  onDurationChange?: (duration: number) => void;
 }
 
-const AudioWaveform = ({ file }: AudioWaveformProps) => {
+const AudioWaveform = ({ file, onDurationChange }: AudioWaveformProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [duration, setDuration] = useState<number>(0);
 
@@ -18,6 +19,7 @@ const AudioWaveform = ({ file }: AudioWaveformProps) => {
       const arrayBuffer = e.target?.result as ArrayBuffer;
       audioContext.decodeAudioData(arrayBuffer).then((audioBuffer) => {
         setDuration(audioBuffer.duration);
+        onDurationChange?.(audioBuffer.duration);
 
         const canvas = canvasRef.current!;
         const ctx = canvas.getContext('2d')!;
@@ -45,7 +47,7 @@ const AudioWaveform = ({ file }: AudioWaveformProps) => {
     };
 
     fileReader.readAsArrayBuffer(file);
-  }, [file]);
+  }, [file, onDurationChange]);
 
   return (
     <div>
