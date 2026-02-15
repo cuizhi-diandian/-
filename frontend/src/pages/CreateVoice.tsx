@@ -23,6 +23,7 @@ const CreateVoice = () => {
   const [processing, setProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<ProcessingStep>('upload');
   const [voiceResult, setVoiceResult] = useState<any>(null);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
 
   const handleFileSelect = (file: File) => {
     const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/webm'];
@@ -38,12 +39,18 @@ const CreateVoice = () => {
 
     setFile(file);
     setVoiceResult(null);
+    setAudioDuration(0);
     return false;
   };
 
   const handleCreateVoice = async () => {
     if (!file) {
       message.error('请先选择或录制音频文件');
+      return;
+    }
+
+    if (audioDuration > 0 && (audioDuration < 1 || audioDuration > 10)) {
+      message.error('音频时长需在 1-10 秒内，请裁剪后重试');
       return;
     }
 
@@ -87,6 +94,7 @@ const CreateVoice = () => {
     setVoiceResult(null);
     setCurrentStep('upload');
     setUploadProgress(0);
+    setAudioDuration(0);
   };
 
   return (
@@ -204,7 +212,7 @@ const CreateVoice = () => {
                     {(file.size / 1024).toFixed(2)} KB
                   </span>
                 </div>
-                <AudioWaveform file={file} />
+                <AudioWaveform file={file} onDurationChange={setAudioDuration} />
               </div>
             )}
 
@@ -254,7 +262,7 @@ const CreateVoice = () => {
               size="large"
               onClick={handleCreateVoice}
               loading={processing}
-              disabled={!file || processing}
+              disabled={!file || processing || (audioDuration > 0 && (audioDuration < 1 || audioDuration > 10))}
               block
               className="gradient-button"
               style={{ 
