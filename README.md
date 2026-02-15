@@ -240,6 +240,9 @@ NFT ID、ownership、少量 metadata、所有“人格成长”“被使用的�
 ```bash
 # StepFun API
 STEP_API_KEY=your_api_key
+DASHSCOPE_API_KEY=your_dashscope_api_key
+QWEN_API_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+QWEN_TTS_VOICE=Cherry
 
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/voices
