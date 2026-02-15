@@ -67,9 +67,24 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+
 app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 
+  try {
+    const checkOnStartup =
+      String(process.env.PROVIDER_HEALTHCHECK_ON_STARTUP || 'true') === 'true';
+
+    if (checkOnStartup) {
+      const startupHealth = await stepfunService.getProviderHealth(false);
+      console.log('Provider health at startup:', startupHealth);
+    }
+  } catch (err) {
+    console.error('Startup health check failed:', err);
+  }
+});
+
+  
   const checkOnStartup = String(process.env.PROVIDER_HEALTHCHECK_ON_STARTUP || 'true') === 'true';
   if (checkOnStartup) {
     const startupHealth = await stepfunService.getProviderHealth(false);
