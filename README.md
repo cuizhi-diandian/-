@@ -240,6 +240,9 @@ NFT ID、ownership、少量 metadata、所有“人格成长”“被使用的�
 ```bash
 # StepFun API
 STEP_API_KEY=your_api_key
+DASHSCOPE_API_KEY=your_dashscope_api_key
+QWEN_API_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+QWEN_TTS_VOICE=Cherry
 
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/voices
@@ -292,3 +295,12 @@ EMBEDDING_DIMENSION=256
 
 
 
+
+
+## GitHub Pages 预览
+
+前端使用 `HashRouter`，GitHub Pages 访问路径示例：
+- 首页：`https://<username>.github.io/<repo>/#/`
+- TTS 页面：`https://<username>.github.io/<repo>/#/tts`
+
+仓库已提供 `deploy-pages.yml` 工作流，push 到 `main` 后会自动构建并发布 `frontend/dist`。
