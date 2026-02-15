@@ -244,6 +244,7 @@ const Home = () => {
                 <Button
                   type="primary"
                   block
+                  onClick={() => navigate('/tts')}
                   style={{ 
                     height: '48px',
                     borderRadius: '12px',
@@ -253,7 +254,7 @@ const Home = () => {
                     border: 'none',
                   }}
                 >
-                  倾听这个声音
+                  去试听生成
                 </Button>
               </Card>
             </Col>
