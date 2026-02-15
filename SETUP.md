@@ -16,7 +16,12 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/voice_platform
 REDIS_URL=redis://localhost:6379
 
 # StepFun API
-STEP_API_KEY=2sq3eKLnDbe3UzkwNc60V863mOLumcvYnxptcjUZcBmmQAGrwdiRDMJsWR3pSxgEU
+STEP_API_KEY=your_step_api_key
+
+# Qwen TTS (DashScope compatible)
+DASHSCOPE_API_KEY=your_dashscope_api_key
+QWEN_API_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+QWEN_TTS_VOICE=Cherry
 
 # Storage
 STORAGE_TYPE=local
@@ -62,3 +67,16 @@ npm run dev
 
 
 
+
+
+## Provider 健康检查
+
+后端启动后可检查 TTS Provider 配置：
+
+```bash
+# 仅检查是否已配置密钥
+curl http://localhost:8000/health/providers
+
+# 额外探测 Provider 连通性（会发起外部 API 调用）
+curl "http://localhost:8000/health/providers?probe=true"
+```

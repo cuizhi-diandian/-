@@ -4,6 +4,7 @@ import { SoundOutlined, DownloadOutlined, PlayCircleOutlined, AudioOutlined } fr
 import { generateTTS } from '../api/tts';
 import { listVoices, type Voice } from '../api/voices';
 import { theme } from '../styles/theme';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -11,7 +12,7 @@ const { Option } = Select;
 const TTSGeneration = () => {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
-  const [model, setModel] = useState('step-tts-mini');
+  const [model, setModel] = useState('qwen3-tts-instruct-flash');
   const [inputText, setInputText] = useState('');
   const [generating, setGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -52,7 +53,7 @@ const TTSGeneration = () => {
 
       if (response.success) {
         if (response.data.audioUrl) {
-          setAudioUrl(response.data.audioUrl);
+          setAudioUrl(resolveMediaUrl(response.data.audioUrl));
         }
         if (response.data.audioBase64) {
           setAudioBase64(response.data.audioBase64);
@@ -68,7 +69,7 @@ const TTSGeneration = () => {
 
   const handleDownload = () => {
     if (audioUrl) {
-      window.open(audioUrl, '_blank');
+      window.open(resolveMediaUrl(audioUrl), '_blank');
     } else if (audioBase64) {
       const link = document.createElement('a');
       link.href = `data:audio/mp3;base64,${audioBase64}`;
@@ -248,7 +249,7 @@ const TTSGeneration = () => {
                   color: theme.colors.sage,
                   fontWeight: 600,
                   fontFamily: theme.typography.mono,
-                }}>step-tts-2</div>
+                }}>qwen3-tts-instruct-flash</div>
               </div>
               
               <div style={{ marginBottom: theme.spacing.lg }}>
@@ -358,6 +359,7 @@ const TTSGeneration = () => {
               style={{ width: '100%' }}
               size="large"
             >
+              <Option value="qwen3-tts-instruct-flash">qwen3-tts-instruct-flash</Option>
               <Option value="step-tts-2">step-tts-2</Option>
               <Option value="step-tts-mini">step-tts-mini</Option>
               <Option value="step-tts-vivid">step-tts-vivid</Option>
@@ -433,7 +435,7 @@ const TTSGeneration = () => {
                   height: '48px',
                   borderRadius: theme.borderRadius.small,
                 }}
-                src={audioUrl || `data:audio/mp3;base64,${audioBase64}`}
+                src={resolveMediaUrl(audioUrl) || `data:audio/mp3;base64,${audioBase64}`}
               />
               <Button 
                 icon={<DownloadOutlined />} 
