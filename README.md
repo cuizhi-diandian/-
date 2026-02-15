@@ -295,3 +295,12 @@ EMBEDDING_DIMENSION=256
 
 
 
+
+
+## GitHub Pages 预览
+
+前端使用 `HashRouter`，GitHub Pages 访问路径示例：
+- 首页：`https://<username>.github.io/<repo>/#/`
+- TTS 页面：`https://<username>.github.io/<repo>/#/tts`
+
+仓库已提供 `deploy-pages.yml` 工作流，push 到 `main` 后会自动构建并发布 `frontend/dist`。
