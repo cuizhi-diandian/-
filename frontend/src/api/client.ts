@@ -1,6 +1,34 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+
+const buildNetworkErrorHint = (): string => {
+  const target = API_BASE_URL;
+  const isHttpTarget = target.startsWith('http://');
+  const isRelativeTarget = target.startsWith('/');
+  const isHttpsPage = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const isLocalApiOnRemotePage =
+    typeof window !== 'undefined' &&
+    !['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+    /localhost|127\.0\.0\.1/.test(target);
+  const isGitHubPagesRelativeApi =
+    typeof window !== 'undefined' && window.location.hostname.endsWith('github.io') && isRelativeTarget;
+
+  if (isHttpsPage && isHttpTarget) {
+    return `网络连接失败：当前页面是 HTTPS，但 API 使用 HTTP（${target}），请改为 HTTPS 后端地址。`;
+  }
+
+  if (isLocalApiOnRemotePage) {
+    return `网络连接失败：当前 API 地址为 ${target}，部署到 GitHub Pages 后无法访问本地 localhost 服务。请设置 VITE_API_BASE_URL 为可公网访问的后端地址。`;
+  }
+
+  if (isGitHubPagesRelativeApi) {
+    return '网络连接失败：当前站点运行在 GitHub Pages，默认 /api 无后端服务。请在 Pages 构建时配置 VITE_API_BASE_URL 指向可公网访问的 HTTPS 后端。';
+  }
+
+  return `网络连接失败，请检查后端服务与 API 地址：${target}`;
+};
 
 
 const buildNetworkErrorHint = (): string => {

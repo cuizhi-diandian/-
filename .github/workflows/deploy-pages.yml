@@ -35,9 +35,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Pages API base URL
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "VITE_API_BASE_URL is not configured."
+            echo "Please set repository variable VITE_API_BASE_URL to a public HTTPS backend URL (e.g. https://api.example.com/api)."
+            exit 1
+          fi
+
       - name: Build static site
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
         run: npm run build:pages
 
       - name: Setup Pages
