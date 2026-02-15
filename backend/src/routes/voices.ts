@@ -1,8 +1,21 @@
 import express, { Request, Response } from 'express';
+import path from 'path';
 import voiceService from '../services/voiceServiceMemory';
 import { sendSuccess, sendError } from '../utils/response';
 
 const router = express.Router();
+
+const withPublicSampleAudioPath = <T extends { sampleAudioPath?: string }>(voice: T): T => {
+  if (!voice.sampleAudioPath) {
+    return voice;
+  }
+
+  const sampleAudioFilename = path.basename(voice.sampleAudioPath);
+  return {
+    ...voice,
+    sampleAudioPath: `/api/files/uploads/${sampleAudioFilename}`,
+  };
+};
 
 // 创建音色
 router.post('/', async (req: Request, res: Response) => {
@@ -44,7 +57,7 @@ router.get('/:voiceId', async (req: Request, res: Response) => {
     if (!voice) {
       return sendError(res, '角色不存在', 404);
     }
-    sendSuccess(res, voice);
+    sendSuccess(res, withPublicSampleAudioPath(voice));
   } catch (error: any) {
     sendError(res, error.message || '获取角色失败', 500, error);
   }
@@ -58,7 +71,10 @@ router.get('/', async (req: Request, res: Response) => {
     const search = req.query.search as string;
 
     const result = await voiceService.listVoices({ page, limit, search });
-    sendSuccess(res, result);
+    sendSuccess(res, {
+      ...result,
+      voices: result.voices.map((voice) => withPublicSampleAudioPath(voice)),
+    });
   } catch (error: any) {
     sendError(res, error.message || '查询失败', 500, error);
   }
@@ -93,4 +109,3 @@ router.delete('/:voiceId', async (req: Request, res: Response) => {
 });
 
 export default router;
-

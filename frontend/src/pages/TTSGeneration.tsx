@@ -4,6 +4,7 @@ import { SoundOutlined, DownloadOutlined, PlayCircleOutlined, AudioOutlined } fr
 import { generateTTS } from '../api/tts';
 import { listVoices, type Voice } from '../api/voices';
 import { theme } from '../styles/theme';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -52,7 +53,7 @@ const TTSGeneration = () => {
 
       if (response.success) {
         if (response.data.audioUrl) {
-          setAudioUrl(response.data.audioUrl);
+          setAudioUrl(resolveMediaUrl(response.data.audioUrl));
         }
         if (response.data.audioBase64) {
           setAudioBase64(response.data.audioBase64);
@@ -68,7 +69,7 @@ const TTSGeneration = () => {
 
   const handleDownload = () => {
     if (audioUrl) {
-      window.open(audioUrl, '_blank');
+      window.open(resolveMediaUrl(audioUrl), '_blank');
     } else if (audioBase64) {
       const link = document.createElement('a');
       link.href = `data:audio/mp3;base64,${audioBase64}`;
@@ -434,7 +435,7 @@ const TTSGeneration = () => {
                   height: '48px',
                   borderRadius: theme.borderRadius.small,
                 }}
-                src={audioUrl || `data:audio/mp3;base64,${audioBase64}`}
+                src={resolveMediaUrl(audioUrl) || `data:audio/mp3;base64,${audioBase64}`}
               />
               <Button 
                 icon={<DownloadOutlined />} 

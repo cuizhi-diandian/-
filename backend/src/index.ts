@@ -24,6 +24,9 @@ const ttsOutputDir = process.env.STORAGE_PATH
   : path.join(__dirname, '../tts_outputs');
 app.use('/api/files/tts', express.static(ttsOutputDir));
 
+const uploadDir = process.env.STORAGE_PATH || path.join(__dirname, '../uploads');
+app.use('/api/files/uploads', express.static(uploadDir));
+
 // 路由
 app.use('/api/files', fileRoutes);
 app.use('/api/voices', voiceRoutes);
@@ -63,14 +66,14 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
-
 app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 
-  const checkOnStartup = String(process.env.PROVIDER_HEALTHCHECK_ON_STARTUP || 'true') === 'true';
+  const checkOnStartup =
+    String(process.env.PROVIDER_HEALTHCHECK_ON_STARTUP || 'true') === 'true';
+
   if (checkOnStartup) {
     const startupHealth = await stepfunService.getProviderHealth(false);
     console.log('Provider health at startup:', startupHealth);
   }
 });
-
