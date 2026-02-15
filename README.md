@@ -294,14 +294,14 @@ EMBEDDING_DIMENSION=256
 ---
 
 
-
-
+部署到 GitHub Pages 时，请在前端构建环境中配置 `VITE_API_BASE_URL` 为可公网访问的后端地址（必须是 HTTPS），否则创建角色/生成语音会出现 Network Error。
 
 ## GitHub Pages 预览
 
 前端使用 `HashRouter`，GitHub Pages 访问路径示例：
 
 > 部署到 GitHub Pages 时，请在前端构建环境中配置 `VITE_API_BASE_URL` 为可公网访问的后端地址（必须是 HTTPS），否则创建角色/生成语音会出现 Network Error。
+
 - 首页：`https://<username>.github.io/<repo>/#/`
 - TTS 页面：`https://<username>.github.io/<repo>/#/tts`
 
@@ -312,3 +312,4 @@ EMBEDDING_DIMENSION=256
 - 新增变量：`VITE_API_BASE_URL=https://<your-backend-domain>/api`（必须是公网 HTTPS）
 
 > 未配置该变量时，工作流会主动失败，避免发布仍指向 `localhost:8000` 的前端包。
+
