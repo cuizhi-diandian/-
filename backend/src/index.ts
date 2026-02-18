@@ -7,6 +7,7 @@ import voiceRoutes from './routes/voices';
 import ttsRoutes from './routes/tts';
 import embeddingRoutes from './routes/embeddings';
 import stepfunService from './services/stepfunService';
+import stepTtsRoutes from './routes/stepTts';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/voices', voiceRoutes);
 app.use('/api/tts', ttsRoutes);
 app.use('/api/embeddings', embeddingRoutes);
+app.use('/api', stepTtsRoutes);
 
 // 健康检查
 app.get('/health', (req, res) => {

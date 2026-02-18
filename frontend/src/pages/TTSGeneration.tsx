@@ -12,7 +12,6 @@ const { Option } = Select;
 const TTSGeneration = () => {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
-  const [model, setModel] = useState('qwen3-tts-instruct-flash');
   const [inputText, setInputText] = useState('');
   const [generating, setGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -47,8 +46,7 @@ const TTSGeneration = () => {
     try {
       const response = await generateTTS({
         voiceId: selectedVoiceId,
-        input: inputText,
-        model,
+        text: inputText,
       });
 
       if (response.success) {
@@ -249,7 +247,7 @@ const TTSGeneration = () => {
                   color: theme.colors.sage,
                   fontWeight: 600,
                   fontFamily: theme.typography.mono,
-                }}>qwen3-tts-instruct-flash</div>
+                }}>step-tts-2</div>
               </div>
               
               <div style={{ marginBottom: theme.spacing.lg }}>
@@ -342,30 +340,6 @@ const TTSGeneration = () => {
             </Select>
           </div>
 
-          <div>
-            <div style={{ 
-              marginBottom: theme.spacing.sm, 
-              fontSize: '14px', 
-              fontWeight: 500, 
-              color: theme.colors.charcoal,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              模型选择
-            </div>
-            <Select 
-              value={model} 
-              onChange={setModel} 
-              style={{ width: '100%' }}
-              size="large"
-            >
-              <Option value="qwen3-tts-instruct-flash">qwen3-tts-instruct-flash</Option>
-              <Option value="step-tts-2">step-tts-2</Option>
-              <Option value="step-tts-mini">step-tts-mini</Option>
-              <Option value="step-tts-vivid">step-tts-vivid</Option>
-              <Option value="step-audio-2">step-audio-2</Option>
-            </Select>
-          </div>
 
           <div>
             <div style={{ 

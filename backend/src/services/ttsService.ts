@@ -1,108 +1,70 @@
-import { Pool } from 'pg';
 import fs from 'fs/promises';
 import path from 'path';
-import pool from '../config/database';
-import voiceService from './voiceService';
+import { v4 as uuidv4 } from 'uuid';
 import stepfunService from './stepfunService';
+import { memoryStorage, Voice } from '../storage/memoryStorage';
 
 const TTS_OUTPUT_DIR = process.env.STORAGE_PATH
   ? path.join(process.env.STORAGE_PATH, 'tts_outputs')
   : path.join(__dirname, '../../tts_outputs');
 
-// 确保输出目录存在
+const STEP_CLONE_MODEL = process.env.STEP_CLONE_MODEL || 'step-voice-clone';
+const STEP_TTS_MODEL = process.env.STEP_TTS_MODEL || 'step-tts-2';
+
 (async () => {
-  try {
-    await fs.mkdir(TTS_OUTPUT_DIR, { recursive: true });
-  } catch (error) {
-    console.error('Failed to create TTS output directory:', error);
-  }
+  await fs.mkdir(TTS_OUTPUT_DIR, { recursive: true });
 })();
 
-export interface TTSRequest {
-  userId: string;
-  voiceId: string;
-  input: string;
-  model: string;
-}
+const saveVoiceRecord = (stepVoiceId: string): Voice => {
+  const id = uuidv4();
+  const now = new Date();
 
-export interface TTSResponse {
-  audioUrl: string;
-  audioPath: string;
-  duration?: number;
-}
+  const voice: Voice = {
+    id,
+    userId: 'default-user',
+    stepVoiceId,
+    fileId: `stepfun-${id}`,
+    model: STEP_CLONE_MODEL,
+    embeddingHash: 'stepfun-managed',
+    metadata: { source: 'stepfun' },
+    createdAt: now,
+    updatedAt: now,
+  };
 
-export class TTSService {
-  /**
-   * 生成TTS音频
-   */
-  async generateTTS(request: TTSRequest): Promise<TTSResponse> {
-    // 1. 获取voice信息
-    const voice = await voiceService.getVoice(request.voiceId);
-    if (!voice) {
-      throw new Error('Voice不存在');
-    }
+  memoryStorage.saveVoice(voice);
+  return voice;
+};
 
-    // 2. 调用StepFun生成音频
-    const audioBuffer = await stepfunService.generateSpeech({
-      input: request.input,
-      voice: voice.stepVoiceId,
-      model: request.model,
-    });
+const resolveStepVoiceId = (voiceId: string): string => {
+  const existing = memoryStorage.getVoice(voiceId);
+  return existing?.stepVoiceId || voiceId;
+};
 
-    // 3. 保存音频文件
-    const timestamp = Date.now();
-    const audioPath = path.join(TTS_OUTPUT_DIR, `${request.voiceId}_${timestamp}.mp3`);
-    await fs.writeFile(audioPath, audioBuffer);
+export const cloneVoice = async (audioFile: string): Promise<{ voiceId: string; stepVoiceId: string }> => {
+  const uploaded = await stepfunService.uploadAudioFile(audioFile);
+  const cloned = await stepfunService.cloneVoice({
+    fileId: uploaded.id,
+    model: STEP_CLONE_MODEL,
+  });
 
-    // 4. 记录使用量
-    await this.recordUsage(request.userId, request.voiceId, request.input, request.model, audioPath);
+  const voice = saveVoiceRecord(cloned.id);
+  return { voiceId: voice.id, stepVoiceId: cloned.id };
+};
 
-    // 5. 返回音频URL（实际应该是完整的URL，这里简化处理）
-    const audioUrl = `/api/files/tts/${path.basename(audioPath)}`;
+export const generateSpeech = async (voiceId: string, text: string): Promise<{ audioUrl: string; audioPath: string }> => {
+  const stepVoiceId = resolveStepVoiceId(voiceId);
 
-    return {
-      audioUrl,
-      audioPath,
-    };
-  }
+  const audioBuffer = await stepfunService.generateSpeech({
+    input: text,
+    voice: stepVoiceId,
+    model: STEP_TTS_MODEL,
+  });
 
-  /**
-   * 记录TTS使用量
-   */
-  private async recordUsage(
-    userId: string,
-    voiceId: string,
-    inputText: string,
-    model: string,
-    audioPath: string
-  ): Promise<void> {
-    // 这里可以计算音频时长（需要音频处理库）
-    // 暂时设为0
-    const duration = 0;
+  const filePath = path.join(TTS_OUTPUT_DIR, `${voiceId}_${Date.now()}.mp3`);
+  await fs.writeFile(filePath, audioBuffer);
 
-    await pool.query(
-      `INSERT INTO tts_requests (user_id, voice_id, input_text, model, audio_path, duration, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-      [userId, voiceId, inputText, model, audioPath, duration]
-    );
-  }
-
-  /**
-   * 获取TTS请求历史
-   */
-  async getTTSHistory(userId: string, limit: number = 20): Promise<any[]> {
-    const result = await pool.query(
-      `SELECT * FROM tts_requests 
-       WHERE user_id = $1 
-       ORDER BY created_at DESC 
-       LIMIT $2`,
-      [userId, limit]
-    );
-    return result.rows;
-  }
-}
-
-export default new TTSService();
-
-
-
+  return {
+    audioUrl: `/api/files/tts/${path.basename(filePath)}`,
+    audioPath: filePath,
+  };
+};
