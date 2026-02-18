@@ -2,8 +2,7 @@ import apiClient from './client';
 
 export interface GenerateTTSRequest {
   voiceId: string;
-  input: string;
-  model: string;
+  text: string;
 }
 
 export interface TTSResponse {
@@ -17,8 +16,5 @@ export interface TTSResponse {
 }
 
 export const generateTTS = async (data: GenerateTTSRequest): Promise<TTSResponse> => {
-  return apiClient.post('/tts/generate', data);
+  return apiClient.post('/tts', data);
 };
-
-
-
